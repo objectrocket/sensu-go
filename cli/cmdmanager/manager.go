@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -249,7 +250,18 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 	env := environment.MergeEnvironments(os.Environ(), commandEnv)
 	env = environment.MergeEnvironments(env, runtimeAsset.Env())
 
-	commandWithArgs := append([]string{commandName}, args...)
+	// Warning, hack! To avoid having to escape quotes from respective shells,
+	// we surround all arguments that are not flags with quotes.
+	var newArgs []string
+	for _, arg := range args {
+		a := arg
+		if !strings.HasPrefix(arg, "-") {
+			a = strconv.Quote(arg)
+		}
+		newArgs = append(newArgs, a)
+	}
+
+	commandWithArgs := append([]string{commandName}, newArgs...)
 
 	ex := command.ExecutionRequest{
 		Env:     env,
