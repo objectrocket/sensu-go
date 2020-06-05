@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added `SENSU_LICENSE_FILE` environment variable to handler executions.
 - Added the `sensuctl user hash-password` command to generate password hashes
 - Added the ability to reset passwords via the backend API & `sensuctl user
 reset-password`
@@ -16,9 +17,11 @@ reset-password`
 hash, in place of the cleartext password
 - Added the beginnings of the core/v3 API.
 - Added automatically generated tests for the core/v2 API.
+- Added suport for the `aix/ppc64` platform.
 
 ### Changed
 - `sensu-agent`'s default log level is now `info` instead of `warn`.
+- Upgrade gostatsd to 20.3.2.
 
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`
@@ -26,6 +29,10 @@ has been moved from sensuctl to the backend API.
 - Errors while publishing proxy check requests do not block scheduling for other
 entities.
 - Listing namespaces in sensuctl with `--chunk-size` now works properly.
+- Prevent the agent from immediately exiting in certain scenarios where
+components are disabled.
+- Fixed an issue where a GraphQL query could fail when querying a namespace
+containing event data in excess of 2GBs.
 
 ## [5.20.2] - 2020-05-26
 
