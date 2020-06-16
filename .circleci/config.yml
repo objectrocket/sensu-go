@@ -1,3 +1,4 @@
+# Since OR plan does not allow for large resource_class, all tests are disabled.
 version: 2.1
 
 sensu_go_build_env: &sensu_go_build_env
@@ -15,9 +16,8 @@ jobs:
     environment:
       GO111MODULE: 'on'
       GOPROXY: 'https://proxy.golang.org'
-      CGO_ENABLED: 0
-    # OR does not have option for a large resource_class
-    # resource_class: large
+    # OR plan does not have option for a large resource_class
+    resource_class: large
     parallelism: 2
     steps:
       - checkout
@@ -25,8 +25,8 @@ jobs:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
 
-      # Run tests
-      # - run: ./build.sh unit
+      Run tests
+      - run: ./build.sh unit
       - run: ./build.sh integration
       - save_cache:
           key: go-mod-v1-{{ checksum "go.sum" }}
@@ -58,18 +58,18 @@ workflows:
   # runs on all commits
   build_and_test:
     jobs:
-      - test
+      # - test
       - build
   test_build_deploy:
     jobs:
-      - test:
-          filters:
-            tags:
-              only:
-                - /^[0-9]+.[0-9]+.[0-9]+$/
-                - /^[0-9]+.[0-9]+.[0-9]+-rc[0-9]+$/
-            branches:
-              ignore: /.*/
+      # - test:
+      #     filters:
+      #       tags:
+      #         only:
+      #           - /^[0-9]+.[0-9]+.[0-9]+$/
+      #           - /^[0-9]+.[0-9]+.[0-9]+-rc[0-9]+$/
+      #       branches:
+      #         ignore: /.*/
       - build_deploy:
           filters:
             tags:
