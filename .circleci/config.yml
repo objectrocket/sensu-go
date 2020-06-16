@@ -15,7 +15,9 @@ jobs:
     environment:
       GO111MODULE: 'on'
       GOPROXY: 'https://proxy.golang.org'
-    resource_class: large
+      CGO_ENABLED: 0
+    # OR does not have option for a large resource_class
+    # resource_class: large
     parallelism: 2
     steps:
       - checkout
