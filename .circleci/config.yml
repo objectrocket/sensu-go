@@ -26,7 +26,7 @@ jobs:
             - go-mod-v1-{{ checksum "go.sum" }}
 
       # Run tests
-      - run: ./build.sh unit
+      # - run: ./build.sh unit
       - run: ./build.sh integration
       - save_cache:
           key: go-mod-v1-{{ checksum "go.sum" }}
