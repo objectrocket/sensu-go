@@ -1,8 +1,4 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
-
-version: 2
+version: 2.1
 
 sensu_go_build_env: &sensu_go_build_env
   #### TEMPLATE_NOTE: go expects specific checkout path representing url
@@ -34,12 +30,49 @@ jobs:
           key: go-mod-v1-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
-
+  build:
+    <<: *sensu_go_build_env
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build the server binary and docker image
+          command: make docker-build IMAGE_VERSION=latest
+  build_deploy:
+    <<: *sensu_go_build_env
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: docker login
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run:
+          name: docker build and push
+          command: |
+            make docker-push IMAGE_VERSION=${CIRCLE_TAG}
 workflows:
   version: 2
-  run_the_tests:
+  # runs on all commits
+  build_and_test:
+    jobs:
+      - test
+      - build
+  test_build_deploy:
     jobs:
       - test:
           filters:
             tags:
+              only:
+                - /^[0-9]+.[0-9]+.[0-9]+$/
+                - /^[0-9]+.[0-9]+.[0-9]+-rc[0-9]+$/
+            branches:
+              ignore: /.*/
+      - build_deploy:
+          filters:
+            tags:
+              only:
+                - /^[0-9]+.[0-9]+.[0-9]+$/
+                - /^[0-9]+.[0-9]+.[0-9]+-rc[0-9]+$/
+            branches:
               ignore: /.*/
