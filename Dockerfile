@@ -9,6 +9,7 @@ FROM alpine:3.6
 ENV USER=sensu
 COPY --from=build-env /go/src/github.com/sensu/sensu-go/_output/sensu-backend /usr/local/bin/sensu-backend
 RUN apk add --no-cache --update ca-certificates && \
+    apk add wget && \
     addgroup -g 1000 ${USER} && \
     adduser -D -g "${USER} user" -H -h "/app" -G "${USER}" -u 1000 ${USER} && \
     chown -R ${USER}:${USER} /usr/local/bin/sensu-backend && \
