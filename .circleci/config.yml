@@ -9,13 +9,16 @@ sensu_go_build_env: &sensu_go_build_env
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
     - image: circleci/golang:1.13.7
+      auth:
+        username: ${DOCKER_USERNAME}
+        password: ${DOCKER_PASSWORD}
 
 jobs:
   test:
     <<: *sensu_go_build_env
     environment:
-      GO111MODULE: 'on'
-      GOPROXY: 'https://proxy.golang.org'
+      GO111MODULE: "on"
+      GOPROXY: "https://proxy.golang.org"
     # OR plan does not have option for a large resource_class
     resource_class: large
     parallelism: 2
@@ -71,6 +74,7 @@ workflows:
       #       branches:
       #         ignore: /.*/
       - build_deploy:
+          context: platform-eng
           filters:
             tags:
               only:
