@@ -1,6 +1,13 @@
 # Since OR plan does not allow for large resource_class, all tests are disabled.
 version: 2.1
 
+references:
+  objectrocket-docker-auth:
+    auth:
+      username: ${DOCKER_USERNAME}
+      password: ${DOCKER_PASSWORD}
+  context-to-use: &context-to-use
+    context: objectrocket-shared
 sensu_go_build_env: &sensu_go_build_env
   #### TEMPLATE_NOTE: go expects specific checkout path representing url
   #### expecting it in the form of
@@ -8,77 +15,78 @@ sensu_go_build_env: &sensu_go_build_env
   ####   /go/src/bitbucket.org/circleci/go-tool
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
-    - image: circleci/golang:1.13.7
-      auth:
-        username: ${DOCKER_USERNAME}
-        password: ${DOCKER_PASSWORD}
+  - image: circleci/golang:1.13.7
+    auth:
+      username: ${DOCKER_USERNAME}
+      password: ${DOCKER_PASSWORD}
 
 jobs:
   test:
     <<: *sensu_go_build_env
     environment:
-      GO111MODULE: "on"
-      GOPROXY: "https://proxy.golang.org"
+      GO111MODULE: on
+      GOPROXY: https://proxy.golang.org
     # OR plan does not have option for a large resource_class
     resource_class: large
     parallelism: 2
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
+    - checkout
+    - restore_cache:
+        keys:
+        - go-mod-v1-{{ checksum "go.sum" }}
 
       # Run tests
-      - run: ./build.sh unit
-      - run: ./build.sh integration
-      - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
+    - run: ./build.sh unit
+    - run: ./build.sh integration
+    - save_cache:
+        key: go-mod-v1-{{ checksum "go.sum" }}
+        paths:
+        - /go/pkg/mod
   build:
     <<: *sensu_go_build_env
     steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Build the server binary and docker image
-          command: make docker-build IMAGE_VERSION=latest
+    - checkout
+    - setup_remote_docker
+    - run:
+        name: Build the server binary and docker image
+        command: make docker-build IMAGE_VERSION=latest
   build_deploy:
     <<: *sensu_go_build_env
     steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: docker login
-          command: |
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - run:
-          name: docker build and push
-          command: |
-            make docker-push IMAGE_VERSION=${CIRCLE_TAG}
+    - checkout
+    - setup_remote_docker
+    - run:
+        name: docker login
+        command: |
+          docker login -u $DOCKER_USER -p $DOCKER_PASS
+    - run:
+        name: docker build and push
+        command: |
+          make docker-push IMAGE_VERSION=${CIRCLE_TAG}
 workflows:
   version: 2
   # runs on all commits
   build_and_test:
     jobs:
-      - test
-      - build
+    - test: *context-to-use
+    - build: *context-to-use
   test_build_deploy:
     jobs:
-      - test:
-          filters:
-            tags:
-              only:
-                - /^[0-9]+.[0-9]+.[0-9]+$/
-                - /^[0-9]+.[0-9]+.[0-9]+-rc[0-9]+$/
-            branches:
-              ignore: /.*/
-      - build_deploy:
-          context: platform-eng
-          filters:
-            tags:
-              only:
-                - /^[0-9]+.[0-9]+.[0-9]+_.*-rc[0-9]+$/
-                - /^[0-9]+.[0-9]+.[0-9]++.*$/
-            branches:
-              ignore: /.*/
+    - test:
+        <<: *context-to-use
+        filters:
+          tags:
+            only:
+            - /^[0-9]+.[0-9]+.[0-9]+$/
+            - /^[0-9]+.[0-9]+.[0-9]+-rc[0-9]+$/
+          branches:
+            ignore: /.*/
+    - build_deploy:
+        context: platform-eng
+        filters:
+          tags:
+            only:
+            - /^[0-9]+.[0-9]+.[0-9]+_.*-rc[0-9]+$/
+            - /^[0-9]+.[0-9]+.[0-9]++.*$/
+          branches:
+            ignore: /.*/
