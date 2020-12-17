@@ -24,7 +24,7 @@ jobs:
   test:
     <<: *sensu_go_build_env
     environment:
-      GO111MODULE: on
+      GO111MODULE: "on"
       GOPROXY: https://proxy.golang.org
     # OR plan does not have option for a large resource_class
     resource_class: large
